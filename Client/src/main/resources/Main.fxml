@@ -13,9 +13,9 @@
 <?import javafx.scene.control.ListView?>
 <BorderPane fx:controller="client.Controller"
             xmlns:fx="http://javafx.com/fxml" prefHeight="200" prefWidth="320">
-<!--    <stylesheets>-->
-<!--        <URL value="/style.css"/>-->
-<!--    </stylesheets>-->
+    <stylesheets>
+        <URL value="@style.css"/>
+    </stylesheets>
 
     <top>
         <MenuBar opacity="0.9">
@@ -24,7 +24,7 @@
                 <MenuItem fx:id="btnDisconnect" text="Disconnect" onAction="#disconnect" disable="true"/>
             </Menu>
             <Menu text="Edit">
-                <MenuItem text = "Change nickname" onAction="#showNickWindow"/>
+                <MenuItem fx:id="btnChangeNick" text = "Change nickname" onAction="#showNickWindow" disable="true"/>
             </Menu>
             <Menu text="Help">
                 <MenuItem text="About" onAction="#openAbout"/>

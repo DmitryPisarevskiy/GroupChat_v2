@@ -51,4 +51,9 @@ public class NickController implements Initializable {
             stage = (Stage) taMsg.getScene().getWindow();
         });
     }
+
+    public void regMessage(String s) {
+        taMsg.clear();
+        taMsg.appendText(s+"\n");
+    }
 }

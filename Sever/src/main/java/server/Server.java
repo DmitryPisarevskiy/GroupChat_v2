@@ -20,6 +20,7 @@ public class Server {
     final static String REG_RESULT ="/regresult ";
     final static String CLIENT_LIST ="/clientlist ";
     final static String CHANGE_NICK ="/changenick ";
+    static final String CHANGE_NICK_RESULT ="/changenickresult " ;
 
     public AuthService getAuthService() {
         return authService;
@@ -37,7 +38,6 @@ public class Server {
             server = new ServerSocket(PORT);
             System.out.println("Сервер запущен!");
             authService = new AdvancedAuthService();
-            System.out.println("База данных подключена!");
 
             while (true) {
                 socket = server.accept();

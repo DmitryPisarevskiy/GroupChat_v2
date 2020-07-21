@@ -50,8 +50,8 @@ public class SimpleAuthService implements AuthService {
     }
 
     @Override
-    public void changeNick(String login, String password, String nickname) throws SQLException {
-
+    public boolean changeNick(String login, String password, String nickname) throws SQLException {
+        return false;
     }
 
 }

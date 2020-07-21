@@ -41,6 +41,8 @@ public class Controller implements Initializable {
     public Button register;
     @FXML
     public MenuItem btnDisconnect;
+    @FXML
+    public MenuItem btnChangeNick;
 
     private final int PORT = 8189;
     private final String IP_ADDRESS = "localhost";
@@ -54,6 +56,8 @@ public class Controller implements Initializable {
     private final static String REG_RESULT ="/regresult ";
     private final static String CLIENT_LIST ="/clientlist ";
     private final static String CHANGE_NICK ="/changenick ";
+    static final String CHANGE_NICK_RESULT ="/changenickresult " ;
+
 
 
     private Socket socket;
@@ -145,6 +149,8 @@ public class Controller implements Initializable {
 
                     //цикл работы
                     btnDisconnect.setDisable(false);
+                    btnChangeNick.setDisable(false);
+
                     while (true) {
 
                         String str = in.readUTF();
@@ -162,6 +168,13 @@ public class Controller implements Initializable {
                                     listOfUsers.getItems().add(token[i]);
                                 }
                             });
+                        } else if (str.startsWith(CHANGE_NICK_RESULT)) {
+                            String result = str.split("\\s")[1];
+                            if (result.equals("ok")) {
+                                nickController.regMessage("Ник успешно изменен!");
+                            } else {
+                                nickController.regMessage("Ник не изменен. Возможно \nвы неверно ввели пароль");
+                            }
                         } else {
                             textArea.appendText(str + "\n");
                         }
@@ -247,7 +260,7 @@ public class Controller implements Initializable {
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/Register.fxml"));
             Parent root = fxmlLoader.load();
             stage.setTitle("Registration Window");
-            stage.setScene(new Scene(root, 300, 240));
+            stage.setScene(new Scene(root, 310, 240));
             stage.initModality(Modality.APPLICATION_MODAL);
             regController = fxmlLoader.getController();
             regController.setController(this);
@@ -263,8 +276,8 @@ public class Controller implements Initializable {
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/NicknameChange.fxml"));
             Parent root = fxmlLoader.load();
             stage.setTitle("Nickname Change Window");
-            stage.setScene(new Scene(root, 300, 240));
-//            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root, 300, 150));
+            stage.initModality(Modality.APPLICATION_MODAL);
             nickController = fxmlLoader.getController();
             nickController.setController(this);
         } catch (IOException e) {
@@ -295,6 +308,7 @@ public class Controller implements Initializable {
     public void disconnect(ActionEvent actionEvent) {
         setAuthenticated(false);
         btnDisconnect.setDisable(true);
+        btnChangeNick.setDisable(true);
         try {
             in.close();
             out.close();
