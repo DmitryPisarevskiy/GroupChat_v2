@@ -38,7 +38,6 @@ public class Server {
             server = new ServerSocket(PORT);
             System.out.println("Сервер запущен!");
             authService = new AdvancedAuthService();
-            System.out.println("База данных подключена!");
 
             while (true) {
                 socket = server.accept();
