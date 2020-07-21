@@ -7,9 +7,9 @@
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="client.RegController"
       prefHeight="180.0" prefWidth="300.0">
-<!--    <stylesheets>-->
-<!--        <URL value="/style.css"/>-->
-<!--    </stylesheets>-->
+    <stylesheets>
+        <URL value="@style.css"/>
+    </stylesheets>
 
     <GridPane>
         <Label text="Login" maxWidth="300" wrapText="true" alignment="BASELINE_CENTER"

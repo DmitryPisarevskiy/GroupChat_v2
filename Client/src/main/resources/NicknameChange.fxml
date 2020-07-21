@@ -7,13 +7,14 @@
 <?import javafx.scene.layout.*?>
 
 <?import javafx.geometry.Insets?>
+<?import java.net.URL?>
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="client.NickController"
       prefHeight="400.0" prefWidth="600.0">
-    <!--    <stylesheets>-->
-    <!--        <URL value="/style.css"/>-->
-    <!--    </stylesheets>-->
+        <stylesheets>
+            <URL value="@style.css"/>
+        </stylesheets>
 
     <GridPane>
         <Label text="New nickname" maxWidth="300" wrapText="true" alignment="BASELINE_CENTER"

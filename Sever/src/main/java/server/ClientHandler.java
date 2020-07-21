@@ -111,6 +111,7 @@ public class ClientHandler {
                             if (b) {
                                 sendMsg(Server.CHANGE_NICK_RESULT + "ok");
                                 nick=token[1];
+                                server.broadcastClientList();
                             } else {
                                 sendMsg(Server.CHANGE_NICK_RESULT + "failed");
                             }
