@@ -17,7 +17,7 @@
         </stylesheets>
 
     <GridPane>
-        <Label text="New nickname" maxWidth="300" wrapText="true" alignment="BASELINE_CENTER"
+        <Label text=" New nickname " maxWidth="300" wrapText="true" alignment="BASELINE_CENTER"
                GridPane.columnIndex="0" GridPane.rowIndex="1"/>
         <TextField fx:id="tfNewNickname"
                    GridPane.columnIndex="1" GridPane.rowIndex="1"/>

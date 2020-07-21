@@ -260,7 +260,7 @@ public class Controller implements Initializable {
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/Register.fxml"));
             Parent root = fxmlLoader.load();
             stage.setTitle("Registration Window");
-            stage.setScene(new Scene(root, 300, 240));
+            stage.setScene(new Scene(root, 310, 240));
             stage.initModality(Modality.APPLICATION_MODAL);
             regController = fxmlLoader.getController();
             regController.setController(this);
@@ -276,8 +276,8 @@ public class Controller implements Initializable {
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/NicknameChange.fxml"));
             Parent root = fxmlLoader.load();
             stage.setTitle("Nickname Change Window");
-            stage.setScene(new Scene(root, 300, 240));
-//            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root, 300, 150));
+            stage.initModality(Modality.APPLICATION_MODAL);
             nickController = fxmlLoader.getController();
             nickController.setController(this);
         } catch (IOException e) {
