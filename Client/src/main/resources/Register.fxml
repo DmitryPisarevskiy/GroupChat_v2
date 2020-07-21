@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="client.RegController"
+      prefHeight="180.0" prefWidth="300.0">
+<!--    <stylesheets>-->
+<!--        <URL value="/style.css"/>-->
+<!--    </stylesheets>-->
+
+    <GridPane>
+        <Label text="Login" maxWidth="300" wrapText="true" alignment="BASELINE_CENTER"
+               GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+        <TextField fx:id="tfLogin"
+                   GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+        <Label text="Password" maxWidth="300" wrapText="true" alignment="BASELINE_CENTER"
+               GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <PasswordField fx:id="pfPassword"
+                       GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+        <Label text=" Repeat Password " maxWidth="300" wrapText="true" alignment="BASELINE_CENTER"
+               GridPane.columnIndex="0" GridPane.rowIndex="2">
+        </Label>
+        <PasswordField fx:id="pfRepeatPassword"
+                       GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+        <Label text="Your nickname" maxWidth="300" wrapText="true" alignment="BASELINE_CENTER"
+               GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+        <TextField fx:id="tfNickname"
+                   GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+    </GridPane>
+
+    <HBox alignment="BASELINE_CENTER">
+        <Button fx:id="btnRegister" text="Register" prefWidth="150" onAction="#tryToRegister">
+            <HBox.margin>
+                <Insets topRightBottomLeft="5"/>
+            </HBox.margin>
+        </Button>
+        <Button fx:id="btnCancel" text="Cancel" prefWidth="100" onAction="#cancel"/>
+    </HBox>
+    <TextArea fx:id="taMsg" prefWidth="100" text=" "/>
+</VBox>

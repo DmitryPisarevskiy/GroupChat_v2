@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="client.NickController"
+      prefHeight="400.0" prefWidth="600.0">
+    <!--    <stylesheets>-->
+    <!--        <URL value="/style.css"/>-->
+    <!--    </stylesheets>-->
+
+    <GridPane>
+        <Label text="New nickname" maxWidth="300" wrapText="true" alignment="BASELINE_CENTER"
+               GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <TextField fx:id="tfNewNickname"
+                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+        <Label text="Password" maxWidth="300" wrapText="true" alignment="BASELINE_CENTER"
+               GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+        <PasswordField fx:id="pfPassword"
+                       GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+    </GridPane>
+
+    <HBox alignment="BASELINE_CENTER">
+        <Button fx:id="btnChange" text="Change" prefWidth="150" onAction="#tryToChangeNick">
+            <HBox.margin>
+                <Insets topRightBottomLeft="5"/>
+            </HBox.margin>
+        </Button>
+        <Button fx:id="btnCancel" text="Cancel" prefWidth="100" onAction="#cancel"/>
+    </HBox>
+    <TextArea fx:id="taMsg" prefWidth="100" text=" "/>
+</VBox>

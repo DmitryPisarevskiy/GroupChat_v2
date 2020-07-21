@@ -1,0 +1,37 @@
+.button {
+    -fx-background-color: #2E8B57;
+    -fx-font-size: 15px;
+    -fx-text-fill: white;
+    -fx-border-width: 15;
+}
+
+#register,#btnCancel {
+    -fx-background-color: lightgray;
+    -fx-font-size: 15px;
+    -fx-text-fill: black;
+    -fx-border-width: 15;
+}
+
+.text-area {
+    -fx-control-inner-background: lightgray;
+}
+
+#taMsg {
+    -fx-text-fill: red;
+}
+
+#label {
+    -fx-background-color: lightgray;
+}
+
+#msg {
+    -fx-text-fill: red;
+}
+
+.text-field {
+    -fx-focus: true;
+}
+
+#authPanel {
+
+}
