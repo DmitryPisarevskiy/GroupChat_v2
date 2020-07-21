@@ -24,7 +24,7 @@
                 <MenuItem fx:id="btnDisconnect" text="Disconnect" onAction="#disconnect" disable="true"/>
             </Menu>
             <Menu text="Edit">
-                <MenuItem text = "Change nickname" onAction="#showNickWindow"/>
+                <MenuItem fx:id="btnChangeNick" text = "Change nickname" onAction="#showNickWindow" disable="true"/>
             </Menu>
             <Menu text="Help">
                 <MenuItem text="About" onAction="#openAbout"/>

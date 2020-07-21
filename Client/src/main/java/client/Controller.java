@@ -41,6 +41,8 @@ public class Controller implements Initializable {
     public Button register;
     @FXML
     public MenuItem btnDisconnect;
+    @FXML
+    public MenuItem btnChangeNick;
 
     private final int PORT = 8189;
     private final String IP_ADDRESS = "localhost";
@@ -55,6 +57,7 @@ public class Controller implements Initializable {
     private final static String CLIENT_LIST ="/clientlist ";
     private final static String CHANGE_NICK ="/changenick ";
     static final String CHANGE_NICK_RESULT ="/changenickresult " ;
+
 
 
     private Socket socket;
@@ -146,6 +149,8 @@ public class Controller implements Initializable {
 
                     //цикл работы
                     btnDisconnect.setDisable(false);
+                    btnChangeNick.setDisable(false);
+
                     while (true) {
 
                         String str = in.readUTF();
@@ -303,6 +308,7 @@ public class Controller implements Initializable {
     public void disconnect(ActionEvent actionEvent) {
         setAuthenticated(false);
         btnDisconnect.setDisable(true);
+        btnChangeNick.setDisable(true);
         try {
             in.close();
             out.close();
