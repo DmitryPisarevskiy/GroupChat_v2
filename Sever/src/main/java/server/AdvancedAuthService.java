@@ -52,6 +52,7 @@ public class AdvancedAuthService implements AuthService {
 //        System.out.println("Добавлен новый пользователь");
 //        rs.close();
 //        return true;
+
     }
 
     public void connectDB() throws ClassNotFoundException, SQLException {
