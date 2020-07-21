@@ -54,6 +54,7 @@ public class Controller implements Initializable {
     private final static String REG_RESULT ="/regresult ";
     private final static String CLIENT_LIST ="/clientlist ";
     private final static String CHANGE_NICK ="/changenick ";
+    static final String CHANGE_NICK_RESULT ="/changenickresult " ;
 
 
     private Socket socket;
@@ -162,6 +163,13 @@ public class Controller implements Initializable {
                                     listOfUsers.getItems().add(token[i]);
                                 }
                             });
+                        } else if (str.startsWith(CHANGE_NICK_RESULT)) {
+                            String result = str.split("\\s")[1];
+                            if (result.equals("ok")) {
+                                nickController.regMessage("Ник успешно изменен!");
+                            } else {
+                                nickController.regMessage("Ник не изменен. Возможно \nвы неверно ввели пароль");
+                            }
                         } else {
                             textArea.appendText(str + "\n");
                         }

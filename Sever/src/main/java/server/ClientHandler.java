@@ -107,10 +107,13 @@ public class ClientHandler {
 
                         } else if (str.startsWith(Server.CHANGE_NICK)){
                             String[] token = str.split("\\s");
-                            String newNick = server
-                                    .getAuthService()
-                                    .getNicknameByLoginAndPassword(token[1], token[2]);
-//                            TODO
+                            boolean b = server.getAuthService().changeNick(login, token[2], token[1]);
+                            if (b) {
+                                sendMsg(Server.CHANGE_NICK_RESULT + "ok");
+                                nick=token[1];
+                            } else {
+                                sendMsg(Server.CHANGE_NICK_RESULT + "failed");
+                            }
                         } else {
                             server.broadcastMsg(this.nick, str);
                         }
