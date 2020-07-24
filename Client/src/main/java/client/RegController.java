@@ -11,20 +11,13 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class RegController implements Initializable {
-    @FXML
-    public TextField tfLogin;
-    @FXML
-    public PasswordField pfPassword;
-    @FXML
-    public PasswordField pfRepeatPassword;
-    @FXML
-    public TextField tfNickname;
-    @FXML
-    public Button btnRegister;
-    @FXML
-    public Button btnCancel;
-    @FXML
-    public TextArea taMsg;
+    @FXML public TextField tfLogin;
+    @FXML public PasswordField pfPassword;
+    @FXML public PasswordField pfRepeatPassword;
+    @FXML public TextField tfNickname;
+    @FXML public Button btnRegister;
+    @FXML public Button btnCancel;
+    @FXML public TextArea taMsg;
 
     private Stage stage;
     private Controller controller;

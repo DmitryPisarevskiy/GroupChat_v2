@@ -1,6 +1,7 @@
 package client;
 
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -15,54 +16,49 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+
+import java.io.*;
 import java.net.Socket;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
-    @FXML
-    public TextArea textArea;
-    @FXML
-    public TextField textField;
-    @FXML
-    public TextField loginField;
-    @FXML
-    public PasswordField passwordField;
-    @FXML
-    public HBox authPanel;
-    @FXML
-    public HBox msgPanel;
-    @FXML
-    public ListView<String> listOfUsers;
-    @FXML
-    public Button register;
-    @FXML
-    public MenuItem btnDisconnect;
-    @FXML
-    public MenuItem btnChangeNick;
+    @FXML public TextArea textArea;
+    @FXML public TextField textField;
+    @FXML public TextField loginField;
+    @FXML public PasswordField passwordField;
+    @FXML public HBox authPanel;
+    @FXML public HBox msgPanel;
+    @FXML public ListView<String> listOfUsers;
+    @FXML public Button register;
+    @FXML public MenuItem btnDisconnect;
+    @FXML public MenuItem btnChangeNick;
+    @FXML public MenuItem btnClearHistory;
 
     private final int PORT = 8189;
-    private final String IP_ADDRESS = "localhost";
+    private final String IP_ADDRESS = "127.0.0.1";
     private final String CHAT_TITLE_EMPTY = "Chat july 2020";
-    private final static String AUTH_OK="/authok ";
-    private final static String AUTH="/auth ";
+    private final int MAX_MSG=100;
+    private final static String AUTH_OK="/authok";
+    private final static String AUTH="/auth";
     private final static String END="/end";
-    private final static String SEND_EXACT_USERS="/w ";
-    private final static String WHO_LOGGED_IN="/new client ";
-    private final static String REG="/reg ";
-    private final static String REG_RESULT ="/regresult ";
-    private final static String CLIENT_LIST ="/clientlist ";
-    private final static String CHANGE_NICK ="/changenick ";
-    static final String CHANGE_NICK_RESULT ="/changenickresult " ;
-
-
+    private final static String SEND_EXACT_USERS="/w";
+    private final static String WHO_LOGGED_IN="/newclient";
+    private final static String REG="/reg";
+    private final static String REG_RESULT ="/regresult";
+    private final static String CLIENT_LIST ="/clientlist";
+    private final static String CHANGE_NICK ="/changenick";
+    private final static String CHANGE_NICK_RESULT ="/changenickresult" ;
+    private final static String RESULT_OK="ok";
+    private final static String RESULT_FAILED="failed";
 
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
+
+    private ObjectInputStream ois;
+    private ObjectOutputStream oos;
 
     private Stage regStage;
     RegController regController;
@@ -71,22 +67,57 @@ public class Controller implements Initializable {
     NickController nickController;
 
     private String nick;
-
     private Stage stage;
+    private boolean authenticated=false;
 
-    public void setAuthenticated(boolean authenticated) {
-        authPanel.setVisible(!authenticated);
-        authPanel.setManaged(!authenticated);
-        msgPanel.setVisible(authenticated);
-        msgPanel.setManaged(authenticated);
-        listOfUsers.setVisible(authenticated);
-        listOfUsers.setManaged(authenticated);
+    private File history;
 
-        if (!authenticated) {
+    private LinkedList<Message> msgList;
+    private Gson gson;
+
+
+    public void setAuthenticated(boolean auth) {
+        authPanel.setVisible(!auth);
+        authPanel.setManaged(!auth);
+        msgPanel.setVisible(auth);
+        msgPanel.setManaged(auth);
+        listOfUsers.setVisible(auth);
+        listOfUsers.setManaged(auth);
+
+        if (!auth) {
             nick = "";
+            btnDisconnect.setDisable(true);
+            btnChangeNick.setDisable(true);
+            btnClearHistory.setDisable(true);
+        } else {
+            setTitle(nick);
+            if (!new File("Client/src/main/resources/histories").exists()) {
+                new File("Client/src/main/resources/histories").mkdirs();
+            }
+            history=new File(String.format("Client/src/main/resources/histories/history_%s.txt", nick));
+            try {
+                if (!history.exists()) {
+                    history.createNewFile();
+                    if (!authenticated) {
+                        msgList = new LinkedList<>();
+                    } else {
+                        textArea.clear();
+                    }
+                } else {
+                    ois = new ObjectInputStream(new FileInputStream(history));
+                    msgList = (LinkedList<Message>) ois.readObject();
+                    ois.close();
+                    for (Message message : msgList) {
+                        textArea.appendText(message.getText()+"\n");
+                    }
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
-        setTitle(nick);
+        authenticated=auth;
     }
+
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -106,11 +137,13 @@ public class Controller implements Initializable {
                 }
             });
         });
-
         setAuthenticated(false);
         regStage = createRegStage();
         nickStage = createNickChangeStage();
+        GsonBuilder builder = new GsonBuilder();
+        gson = builder.create();
     }
+
 
     private void connect() {
         try {
@@ -123,66 +156,78 @@ public class Controller implements Initializable {
 
                     //цикл аутентификации
                     while (true) {
-                        String str = in.readUTF();
-
-                        if (str.startsWith(AUTH_OK)) {
-                            nick = str.split("\\s")[1];
-                            setAuthenticated(true);
-                            listOfUsers.setVisible(true);
-                            listOfUsers.setManaged(true);
-                            textArea.clear();
-                            break;
-                        } else if (str.equals(END)) {
-                            throw new RuntimeException();
-                        } else if (str.startsWith(REG_RESULT)) {
-                            String result = str.split("\\s")[1];
-                            if (result.equals("ok")) {
-                                regController.regMessage("Регистрация прошла успешно!");
+                        Message msg = gson.fromJson(in.readUTF(), Message.class);
+                        System.out.println("От сервера пришло сообщение " + gson.toJson(msg));
+                        if (msg.isSystem()) {
+                            String[] token = msg.getSystemCommand().split("\\s");
+                            if (token[0].equals(AUTH_OK)) {
+                                nick = token[1];
+                                textArea.clear();
+                                setAuthenticated(true);
+                                textArea.appendText(msg.getText()+"\n");
+                                listOfUsers.setVisible(true);
+                                listOfUsers.setManaged(true);
+                                addMsgToHistory(msg);
+                                break;
+                            } else if (token[0].equals(END)) {
+                                System.out.println("Связь с сервером была прервана");
+                                throw new RuntimeException();
+                            } else if (token[0].equals(REG_RESULT)) {
+                                if (token[1].equals(RESULT_OK)) {
+                                    regController.regMessage("Регистрация прошла успешно!");
+                                } else {
+                                    regController.regMessage("Регистрация не пройдена! \nПользователь с данным ником \nи/или логином уже существует");
+                                }
                             } else {
-                                regController.regMessage("Регистрация не пройдена! \nПользователь с данным ником \nи/или логином уже существует");
+                                setAuthenticated(false);
+                                textArea.appendText(msg.getText() + "\n");
                             }
-                        } else {
-                            setAuthenticated(false);
-                            textArea.appendText(str + "\n");
                         }
+                        addMsgToHistory(msg);
                     }
 
                     //цикл работы
                     btnDisconnect.setDisable(false);
                     btnChangeNick.setDisable(false);
-
+                    btnClearHistory.setDisable(false);
                     while (true) {
-
-                        String str = in.readUTF();
-                        if (str.equals(END)) {
-                            setAuthenticated(false);
-                            break;
-                        } else if (str.startsWith(WHO_LOGGED_IN)) {
-                            String[] token = str.split("\\s");
-                            textArea.appendText("Пользователь " + token[2] + " вошел в чат\n");
-                        } else if (str.startsWith(CLIENT_LIST)) {
-                            String[] token = str.split("\\s");
-                            Platform.runLater(() -> {
-                                listOfUsers.getItems().clear();
-                                for (int i = 1; i < token.length; i++) {
-                                    listOfUsers.getItems().add(token[i]);
+                        Message msg=gson.fromJson(in.readUTF(),Message.class);
+                        System.out.println("От сервера пришло сообщение " + gson.toJson(msg));
+                        addMsgToHistory(msg);
+                        if (msg.isSystem()) {
+                            String[] token = msg.getSystemCommand().split("\\s");
+                            if (token[0].equals(END)) {
+                                setAuthenticated(false);
+                                break;
+                            } else if (token[0].equals(WHO_LOGGED_IN)) {
+                                if (!token[1].equals(nick)) {
+                                    textArea.appendText(msg.getText()+"\n");
                                 }
-                            });
-                        } else if (str.startsWith(CHANGE_NICK_RESULT)) {
-                            String result = str.split("\\s")[1];
-                            if (result.equals("ok")) {
-                                nickController.regMessage("Ник успешно изменен!");
-                            } else {
-                                nickController.regMessage("Ник не изменен. Возможно \nвы неверно ввели пароль");
+                            } else if (token[0].equals(CLIENT_LIST)) {
+                                Platform.runLater(() -> {
+                                    listOfUsers.getItems().clear();
+                                    for (int i = 1; i < token.length; i++) {
+                                        listOfUsers.getItems().add(token[i]);
+                                    }
+                                });
+                            } else if (token[0].equals(CHANGE_NICK_RESULT)) {
+                                if (token[1].equals(RESULT_OK)) {
+                                    nick=token[2];
+                                    nickController.regMessage("Ник успешно изменен!");
+                                    setAuthenticated(true);
+                                    textArea.appendText(msg.getText()+"\n");
+                                } else {
+                                    nickController.regMessage("Ник не изменен. Возможно \nвы неверно ввели пароль");
+                                }
                             }
                         } else {
-                            textArea.appendText(str + "\n");
+
+                            textArea.appendText(String.format("[%s]->[%s]: %s\n",msg.getSender(),
+                                    msg.getRecievers().equals("")?"everyone":msg.getRecievers(),msg.getText()));
                         }
                     }
-                } catch (IOException e) {
+                } catch (IOException | RuntimeException e) {
                     e.printStackTrace();
-                } catch (RuntimeException e) {
-                    System.out.println("Сервер отключил соединение");
                 } finally {
                     try {
                         in.close();
@@ -202,10 +247,26 @@ public class Controller implements Initializable {
         }
     }
 
+    private void addMsgToHistory(Message msg) throws IOException {
+        if (!msg.isSystem()
+                || msg.getSystemCommand().startsWith(AUTH_OK)
+                || (msg.getSystemCommand().startsWith(WHO_LOGGED_IN) && !msg.getSystemCommand().endsWith(nick))) {
+            msgList.addLast(msg);
+            if (msgList.size()>MAX_MSG) {
+                msgList.removeFirst();
+            }
+            oos = new ObjectOutputStream(new FileOutputStream(history));
+            oos.writeObject(msgList);
+            oos.close();
+        }
+    }
+
 
     public void sendMsg(ActionEvent actionEvent) {
         try {
-            out.writeUTF(textField.getText());
+            Message msg = new Message(nick,"", textField.getText());
+            String msgAsJSON = new Gson().toJson(msg);
+            out.writeUTF(msgAsJSON);
             textField.requestFocus();
             textField.clear();
         } catch (IOException e) {
@@ -213,29 +274,33 @@ public class Controller implements Initializable {
         }
     }
 
+
     public void tryToAuth(ActionEvent actionEvent) {
         if (loginField.getText().equals("") && passwordField.getText().equals("")) {
             textArea.appendText("Введите логин и пароль\n");
             return;
         }
-
         if (socket == null || socket.isClosed()) {
             connect();
         }
-
         try {
-            out.writeUTF(AUTH + loginField.getText().trim() + " " + passwordField.getText().trim());
+            Message msg = new Message(String.format("%s %s %s",AUTH, loginField.getText().trim(), passwordField.getText().trim()));
+            String msgAsJSON = new Gson().toJson(msg);
+            System.out.println("Серверру направлено: " + msgAsJSON);
+            out.writeUTF(msgAsJSON);
             passwordField.clear();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+
     private void setTitle(String nick) {
         Platform.runLater(() -> {
             stage.setTitle(CHAT_TITLE_EMPTY + " : " + nick);
         });
     }
+
 
     public void close() {
         Stage stage = (Stage) textField.getScene().getWindow();
@@ -250,9 +315,11 @@ public class Controller implements Initializable {
         alert.showAndWait();
     }
 
+
     public void showRegWindow(ActionEvent actionEvent) {
         regStage.show();
     }
+
 
     private Stage createRegStage() {
         Stage stage = new Stage();
@@ -270,6 +337,7 @@ public class Controller implements Initializable {
         return stage;
     }
 
+
     private Stage createNickChangeStage() {
         Stage stage = new Stage();
         try {
@@ -286,24 +354,25 @@ public class Controller implements Initializable {
         return stage;
     }
 
+
     protected void tryToReg(String login, String password, String nick) {
         if (socket == null || socket.isClosed()) {
             connect();
         }
         try {
-            out.writeUTF(String.format(REG + "%s %s %s", login, password, nick));
+            Message msg = new Message(String.format("%s %s %s %s", REG, login, password, nick));
+            String msgAsJSON = new Gson().toJson(msg);
+            System.out.println("Серверру направлено: " + msgAsJSON);
+            out.writeUTF(msgAsJSON);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+
     public void clickClientList(MouseEvent mouseEvent) {
-        if (textField.getText().startsWith(SEND_EXACT_USERS)) {
-            textField.appendText(" " + listOfUsers.getSelectionModel().getSelectedItem());
-        } else {
-            textField.setText(SEND_EXACT_USERS + listOfUsers.getSelectionModel().getSelectedItem());
-        }
     }
+
 
     public void disconnect(ActionEvent actionEvent) {
         setAuthenticated(false);
@@ -318,15 +387,28 @@ public class Controller implements Initializable {
         }
     }
 
+
     public void showNickWindow(ActionEvent actionEvent) {
         nickStage.show();
     }
 
+
     public void tryToChangeNick(String nick, String password) {
         try {
-            out.writeUTF(String.format(CHANGE_NICK + "%s %s", nick, password));
+            Message msg = new Message(String.format("%s %s %s",CHANGE_NICK, nick, password));
+            String msgAsJSON = new Gson().toJson(msg);
+            System.out.println("Серверру направлено: " + msgAsJSON);
+            out.writeUTF(msgAsJSON);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void clearHistory(ActionEvent actionEvent) throws IOException {
+        msgList.clear();
+        textArea.clear();
+        oos = new ObjectOutputStream(new FileOutputStream(history));
+        oos.writeObject(msgList);
+        oos.close();
     }
 }

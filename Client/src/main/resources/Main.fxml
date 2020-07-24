@@ -25,6 +25,7 @@
             </Menu>
             <Menu text="Edit">
                 <MenuItem fx:id="btnChangeNick" text = "Change nickname" onAction="#showNickWindow" disable="true"/>
+                <MenuItem fx:id="btnClearHistory" text = "Clear history" onAction="#clearHistory" disable="true"/>
             </Menu>
             <Menu text="Help">
                 <MenuItem text="About" onAction="#openAbout"/>

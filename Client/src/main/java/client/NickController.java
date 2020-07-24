@@ -14,16 +14,11 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class NickController implements Initializable {
-    @FXML
-    public TextField tfNewNickname;
-    @FXML
-    public PasswordField pfPassword;
-    @FXML
-    public TextArea taMsg;
-    @FXML
-    public Button btnChange;
-    @FXML
-    public Button btnCancel;
+    @FXML public TextField tfNewNickname;
+    @FXML public PasswordField pfPassword;
+    @FXML public TextArea taMsg;
+    @FXML public Button btnChange;
+    @FXML public Button btnCancel;
 
     private Stage stage;
     private Controller controller;
