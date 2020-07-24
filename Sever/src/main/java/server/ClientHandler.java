@@ -1,5 +1,8 @@
 package server;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -7,6 +10,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ClientHandler {
     Server server;
@@ -18,6 +22,7 @@ public class ClientHandler {
     private String login;
     protected boolean clientIsAuth;
     private final int SOCKET_TIME_OUT = 5000;
+    private Gson gson;
 
     public ClientHandler(Server server, Socket socket) {
         try {
@@ -26,97 +31,104 @@ public class ClientHandler {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
             clientIsAuth = false;
+            GsonBuilder builder = new GsonBuilder();
+            gson = builder.create();
 
             new Thread(() -> {
                 try {
                     //цикл аутентификации
                     try {
                         socket.setSoTimeout(SOCKET_TIME_OUT);
+                        Message msg;
                         while (true) {
-                            String str = in.readUTF();
-
-                            if (str.startsWith(Server.REG)) {
-                                String[] token = str.split("\\s");
-                                boolean b = server.getAuthService().registration(token[1], token[2], token[3]);
-                                if (b) {
-                                    System.out.println("Прошла регистрация нового пользователя " + token[3] + "\n");
-                                    sendMsg(Server.REG_RESULT + "ok");
-                                } else {
-                                    System.out.println("Была неудачная попытка регистрации");
-                                    sendMsg(Server.REG_RESULT + "failed");
-                                }
-                            } else if (str.startsWith(Server.AUTH)) {
-                                String[] token = str.split("\\s");
-                                if (token.length < 3) {
-                                    continue;
-                                }
-                                String newNick = server
-                                        .getAuthService()
-                                        .getNicknameByLoginAndPassword(token[1], token[2]);
-                                Boolean nickIsOnLine = server.nickIsOnLine(newNick);
-                                if (newNick == null) {
-                                    sendMsg("Неверный логин / пароль");
-                                } else if (!nickIsOnLine) {
-                                    sendMsg(Server.AUTH_OK + newNick);
-                                    nick = newNick;
-                                    login = token[1];
-                                    server.subscribe(this);
-                                    System.out.printf("Клиент %s подключился \n", nick);
-                                    server.broadcastMsg(Server.WHO_LOGGED_IN + nick);
-                                    clientIsAuth = true;
-                                    socket.setSoTimeout(0);
-                                    break;
-                                } else {
-                                    sendMsg("Пользователь с данным логином уже зашел в чат");
+                            msg = gson.fromJson(in.readUTF(),Message.class);
+                            System.out.println("Серверу пришло сообщение: " + gson.toJson(msg));
+                            if (msg.isSystem()) {
+                                String[] token = msg.getSystemCommand().split("\\s");
+                                if (token[0].equals(Server.REG)) {
+                                    boolean b = server.getAuthService().registration(token[1], token[2], token[3]);
+                                    if (b) {
+                                        System.out.println("Прошла регистрация нового пользователя " + token[3] + "\n");
+                                        sendSystemMsg(String.format("%s %s",Server.REG_RESULT, Server.RESULT_OK));
+                                    } else {
+                                        System.out.println("Была неудачная попытка регистрации");
+                                        sendSystemMsg(String.format("%s %s",Server.REG_RESULT, Server.RESULT_FAILED));
+                                    }
+                                } else if (token[0].equals(Server.AUTH)) {
+                                    if (token.length < 3) {
+                                        continue;
+                                    }
+                                    String newNick = server
+                                            .getAuthService()
+                                            .getNicknameByLoginAndPassword(token[1], token[2]);
+                                    boolean nickIsOnLine = server.nickIsOnLine(newNick);
+                                    if (newNick == null) {
+                                        sendSystemMsg("Неверный логин / пароль");
+                                    } else if (!nickIsOnLine) {
+                                        sendSystemMsg(String.format("%s %s", Server.AUTH_OK, newNick));
+                                        nick = newNick;
+                                        login = token[1];
+                                        server.subscribe(this);
+                                        System.out.printf("Клиент %s подключился \n", nick);
+                                        server.broadcastSystemMsg(String.format("%s %s", Server.WHO_LOGGED_IN, nick));
+                                        clientIsAuth = true;
+                                        socket.setSoTimeout(0);
+                                        break;
+                                    } else {
+                                        sendSystemMsg("Пользователь с данным логином уже зашел в чат");
+                                    }
                                 }
                             }
                         }
                     } catch (SocketTimeoutException e) {
-                        sendMsg(Server.END);
+                        sendSystemMsg(Server.END);
                     }
 
                     //цикл работы
                     while (clientIsAuth) {
-                        String str = in.readUTF();
-
-                        if (str.equals(Server.END)) {
-                            out.writeUTF(Server.END);
-                            break;
-
-                        } else if (str.startsWith(Server.SEND_EXACT_USERS)) {
-                            String[] token = str.split("\\s");
-                            ArrayList<String> nicknames = new ArrayList<>();
-                            int i = 1;
-                            boolean stop;
-                            while (i < token.length) {
-                                stop = true;
-                                for (ClientHandler clientHandler : server.getClients()) {
-                                    if (clientHandler.getNick().equals(token[i])) {
-                                        nicknames.add(token[i]);
-                                        stop = false;
-                                    }
+                        Message msg=gson.fromJson(in.readUTF(),Message.class);
+                        System.out.println("Серверу пришло сообщение: " + gson.toJson(msg));
+                        if (msg.isSystem()) {
+                            String[] token = msg.getSystemCommand().split("\\s");
+                            if (token[0].equals(Server.END)) {
+                                sendSystemMsg(Server.END);
+                                break;
+                            } else if (token[0].equals(Server.CHANGE_NICK)) {
+                                boolean b = server.getAuthService().changeNick(login, token[2], token[1]);
+                                if (b) {
+                                    sendSystemMsg(String.format("%s %s %s",Server.CHANGE_NICK_RESULT, Server.RESULT_OK, token[1]));
+                                    nick=token[1];
+                                    server.broadcastClientList();
+                                } else {
+                                    sendSystemMsg(String.format("%s %s",Server.CHANGE_NICK_RESULT, Server.RESULT_FAILED));
                                 }
-                                if (stop) {
-                                    break;
-                                }
-                                i++;
-                            }
-                            if (nicknames.size() != 0) {
-                                server.broadcastMsg(this.nick, nicknames, str.substring(str.indexOf(nicknames.get(nicknames.size() - 1)) + nicknames.get(nicknames.size() - 1).length() + 1));
-                            }
-
-                        } else if (str.startsWith(Server.CHANGE_NICK)){
-                            String[] token = str.split("\\s");
-                            boolean b = server.getAuthService().changeNick(login, token[2], token[1]);
-                            if (b) {
-                                sendMsg(Server.CHANGE_NICK_RESULT + "ok");
-                                nick=token[1];
-                                server.broadcastClientList();
-                            } else {
-                                sendMsg(Server.CHANGE_NICK_RESULT + "failed");
                             }
                         } else {
-                            server.broadcastMsg(this.nick, str);
+                            server.broadcastMsg(msg);
+//                            if (!msg.getRecievers().equals("")) {
+//                                ArrayList<String> nicknames = new ArrayList<>();
+//                                String[] token=msg.getSystemCommand().split("\\s");
+//                                int i = 0;
+//                                boolean stop;
+//                                while (i < token.length) {
+//                                    stop = true;
+//                                    for (ClientHandler clientHandler : server.getClients()) {
+//                                        if (clientHandler.getNick().equals(token[i])) {
+//                                            nicknames.add(token[i]);
+//                                            stop = false;
+//                                        }
+//                                    }
+//                                    if (stop) {
+//                                        break;
+//                                    }
+//                                    i++;
+//                                }
+//                                if (nicknames.size() != 0) {
+//                                    server.broadcastMsg(this.nick, nicknames, msg));
+//                                }
+//                            } else {
+//                                server.broadcastMsg(this.nick, "",msg);
+//                            }
                         }
                     }
                 } catch (IOException | SQLException e) {
@@ -142,9 +154,20 @@ public class ClientHandler {
         }
     }
 
-    void sendMsg(String str) {
+    void sendSystemMsg(String str) {
         try {
-            out.writeUTF(str);
+            Message msg = new Message(str);
+            String msgAsJSON = new Gson().toJson(msg);
+            out.writeUTF(msgAsJSON);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void sendMsg(Message msg) {
+        try {
+            String msgAsJSON = new Gson().toJson(msg);
+            out.writeUTF(msgAsJSON);
         } catch (IOException e) {
             e.printStackTrace();
         }
