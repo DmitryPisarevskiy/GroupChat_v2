@@ -20,6 +20,8 @@ import javafx.stage.WindowEvent;
 import java.io.*;
 import java.net.Socket;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
 
@@ -52,6 +54,7 @@ public class Controller implements Initializable {
     private final static String CHANGE_NICK_RESULT ="/changenickresult" ;
     private final static String RESULT_OK="ok";
     private final static String RESULT_FAILED="failed";
+    private final static DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm");
 
     private Socket socket;
     private DataInputStream in;
@@ -108,7 +111,12 @@ public class Controller implements Initializable {
                     msgList = (LinkedList<Message>) ois.readObject();
                     ois.close();
                     for (Message message : msgList) {
-                        textArea.appendText(message.getText()+"\n");
+                        if (!message.isSystem()) {
+                            textArea.appendText(String.format("%s, [%s]->[%s]: %s\n",DATE_FORMAT.format(message.getDate()), message.getSender(),
+                                    message.getRecievers().equals("")?"everyone":message.getRecievers(),message.getText()));
+                        } else {
+                            textArea.appendText(message.getText()+"\n");
+                        }
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {
@@ -221,8 +229,7 @@ public class Controller implements Initializable {
                                 }
                             }
                         } else {
-
-                            textArea.appendText(String.format("[%s]->[%s]: %s\n",msg.getSender(),
+                            textArea.appendText(String.format("%s, [%s]->[%s]: %s\n",DATE_FORMAT.format(msg.getDate()), msg.getSender(),
                                     msg.getRecievers().equals("")?"everyone":msg.getRecievers(),msg.getText()));
                         }
                     }
