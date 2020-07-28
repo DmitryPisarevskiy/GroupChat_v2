@@ -5,6 +5,7 @@ import java.sql.*;
 public class AdvancedAuthService implements AuthService {
     private static Connection connection;
     private static Statement stmt;
+    private int numOfRegisteredClients;
 
     public AdvancedAuthService() throws SQLException, ClassNotFoundException {
         connectDB();
@@ -55,7 +56,19 @@ public class AdvancedAuthService implements AuthService {
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:AuthDataBase.db");
         stmt = connection.createStatement();
-        System.out.println("База данных подключена");
+        System.out.println("База данных подключена.");
+        ResultSet rs = null;
+        rs = stmt.executeQuery("SELECT nickname FROM users");
+        numOfRegisteredClients=0;
+        while (rs.next()) {
+            numOfRegisteredClients++;
+        }
+        System.out.println("Зарегистрированных пользователей - " + numOfRegisteredClients + " человек");
+        rs.close();
+    }
+
+    public int getNumOfRegisteredClients() {
+        return numOfRegisteredClients;
     }
 
     public void disconnectDB() {
