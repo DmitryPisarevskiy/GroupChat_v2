@@ -34,7 +34,8 @@ public class ClientHandler {
             GsonBuilder builder = new GsonBuilder();
             gson = builder.create();
 
-            new Thread(() -> {
+
+            Server.executorService.execute(new Thread(() -> {
                 try {
                     //цикл аутентификации
                     try {
@@ -105,30 +106,6 @@ public class ClientHandler {
                             }
                         } else {
                             server.broadcastMsg(msg);
-//                            if (!msg.getRecievers().equals("")) {
-//                                ArrayList<String> nicknames = new ArrayList<>();
-//                                String[] token=msg.getSystemCommand().split("\\s");
-//                                int i = 0;
-//                                boolean stop;
-//                                while (i < token.length) {
-//                                    stop = true;
-//                                    for (ClientHandler clientHandler : server.getClients()) {
-//                                        if (clientHandler.getNick().equals(token[i])) {
-//                                            nicknames.add(token[i]);
-//                                            stop = false;
-//                                        }
-//                                    }
-//                                    if (stop) {
-//                                        break;
-//                                    }
-//                                    i++;
-//                                }
-//                                if (nicknames.size() != 0) {
-//                                    server.broadcastMsg(this.nick, nicknames, msg));
-//                                }
-//                            } else {
-//                                server.broadcastMsg(this.nick, "",msg);
-//                            }
                         }
                     }
                 } catch (IOException | SQLException e) {
@@ -148,7 +125,8 @@ public class ClientHandler {
                         e.printStackTrace();
                     }
                 }
-            }).start();
+            }));
+
         } catch (IOException e) {
             e.printStackTrace();
         }

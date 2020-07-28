@@ -7,26 +7,31 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     private List<ClientHandler> clients;
     private AdvancedAuthService authService;
-    final static String AUTH_OK="/authok";
-    final static String AUTH="/auth";
-    final static String END="/end";
-    final static String SEND_EXACT_USERS="/w";
-    final static String WHO_LOGGED_IN="/newclient";
-    final static String REG="/reg";
-    final static String REG_RESULT ="/regresult";
-    final static String CLIENT_LIST ="/clientlist";
-    final static String CHANGE_NICK ="/changenick";
-    final static String CHANGE_NICK_RESULT ="/changenickresult" ;
-    final static String RESULT_OK="ok";
-    final static String RESULT_FAILED="failed";
+    final static String AUTH_OK = "/authok";
+    final static String AUTH = "/auth";
+    final static String END = "/end";
+    final static String SEND_EXACT_USERS = "/w";
+    final static String WHO_LOGGED_IN = "/newclient";
+    final static String REG = "/reg";
+    final static String REG_RESULT = "/regresult";
+    final static String CLIENT_LIST = "/clientlist";
+    final static String CHANGE_NICK = "/changenick";
+    final static String CHANGE_NICK_RESULT = "/changenickresult";
+    final static String RESULT_OK = "ok";
+    final static String RESULT_FAILED = "failed";
+
+    static ExecutorService executorService;
 
     public AuthService getAuthService() {
         return authService;
     }
+
 
     public Server() {
         clients = new Vector<>();
@@ -40,12 +45,13 @@ public class Server {
             server = new ServerSocket(PORT);
             System.out.println("Сервер запущен!");
             authService = new AdvancedAuthService();
+            executorService = Executors.newFixedThreadPool(authService.getNumOfRegisteredClients()*3);
 
             while (true) {
                 socket = server.accept();
                 System.out.println("Клиент подключился");
-                System.out.println("socket.getRemoteSocketAddress(): "+socket.getRemoteSocketAddress());
-                System.out.println("socket.getLocalSocketAddress() "+socket.getLocalSocketAddress());
+                System.out.println("socket.getRemoteSocketAddress(): " + socket.getRemoteSocketAddress());
+                System.out.println("socket.getLocalSocketAddress() " + socket.getLocalSocketAddress());
                 new ClientHandler(this, socket);
             }
         } catch (IOException | SQLException | ClassNotFoundException e) {
@@ -62,22 +68,15 @@ public class Server {
         }
     }
 
-//    void broadcastMsg(String sender, ArrayList<String> receivers, Message msg){
-//        for (ClientHandler client : clients) {
-//            if (receivers.contains(client.getNick()) || sender.equals(client.getNick()))  {
-//                client.sendSystemMsg(sender + "->" +receivers + ": " +msg);
-//            }
-//        }
-//    }
 
-    void broadcastMsg(Message msg){
+    void broadcastMsg(Message msg) {
         if (msg.isSystem()) {
             for (ClientHandler client : clients) {
                 client.sendSystemMsg(msg.getSystemCommand());
             }
         } else {
             if (!msg.getRecievers().equals("")) {
-                String[] token=msg.getRecievers().split("\\s");
+                String[] token = msg.getRecievers().split("\\s");
                 int i = 0;
                 while (i < token.length) {
                     for (ClientHandler clientHandler : clients) {
@@ -95,14 +94,14 @@ public class Server {
         }
     }
 
-    public void subscribe(ClientHandler clientHandler){
+    public void subscribe(ClientHandler clientHandler) {
         clients.add(clientHandler);
         broadcastClientList();
     }
 
-    public void unsubscribe(ClientHandler clientHandler){
+    public void unsubscribe(ClientHandler clientHandler) {
         if (clientHandler.clientIsAuth) {
-            broadcastSystemMsg(clientHandler.getNick()+" вышел из чата");
+            broadcastSystemMsg(clientHandler.getNick() + " вышел из чата");
         }
         clients.remove(clientHandler);
         broadcastClientList();
@@ -119,18 +118,18 @@ public class Server {
     }
 
     public void broadcastClientList() {
-        StringBuilder sb=new StringBuilder("");
-        sb.append(CLIENT_LIST+" ");
+        StringBuilder sb = new StringBuilder("");
+        sb.append(CLIENT_LIST + " ");
         for (ClientHandler client : clients) {
             sb.append(client.getNick()).append(" ");
         }
-        String str=sb.toString();
+        String str = sb.toString();
         broadcastSystemMsg(str);
     }
 
     public boolean nickIsOnLine(String nick) {
         for (ClientHandler client : clients) {
-            if (client.getNick().equals(nick))  {
+            if (client.getNick().equals(nick)) {
                 return true;
             }
         }
