@@ -1,6 +1,7 @@
 package server;
 
 import java.sql.*;
+import java.util.logging.Level;
 
 public class AdvancedAuthService implements AuthService {
     private static Connection connection;
@@ -56,14 +57,16 @@ public class AdvancedAuthService implements AuthService {
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:AuthDataBase.db");
         stmt = connection.createStatement();
-        System.out.println("База данных подключена.");
+        Server.LOGGER.log(Level.SEVERE,"База данных подключена.");
+//        System.out.println("База данных подключена.");
         ResultSet rs = null;
         rs = stmt.executeQuery("SELECT nickname FROM users");
         numOfRegisteredClients=0;
         while (rs.next()) {
             numOfRegisteredClients++;
         }
-        System.out.println("Зарегистрированных пользователей - " + numOfRegisteredClients + " человек");
+        Server.LOGGER.log(Level.INFO,"Зарегистрированных пользователей - " + numOfRegisteredClients + " человек");
+//        System.out.println("Зарегистрированных пользователей - " + numOfRegisteredClients + " человек");
         rs.close();
     }
 

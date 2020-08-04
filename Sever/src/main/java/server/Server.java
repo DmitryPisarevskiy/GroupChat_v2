@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.*;
 
 public class Server {
     private List<ClientHandler> clients;
@@ -26,6 +27,8 @@ public class Server {
     final static String RESULT_OK = "ok";
     final static String RESULT_FAILED = "failed";
 
+    static final Logger LOGGER = Logger.getLogger(Server.class.getName());
+
     static ExecutorService executorService;
 
     public AuthService getAuthService() {
@@ -38,25 +41,38 @@ public class Server {
 
         ServerSocket server = null;
         Socket socket;
+        try {
+            Handler fileHandler = new FileHandler("server.log",true);
+            fileHandler.setFormatter(new SimpleFormatter());
+            fileHandler.setLevel(Level.INFO);
+            LOGGER.addHandler(fileHandler);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         final int PORT = 8189;
 
         try {
             server = new ServerSocket(PORT);
-            System.out.println("Сервер запущен!");
+//            System.out.println("Сервер запущен!");
+            LOGGER.log(Level.SEVERE,"Сервер запущен!");
             authService = new AdvancedAuthService();
             executorService = Executors.newFixedThreadPool(authService.getNumOfRegisteredClients()*3);
 
             while (true) {
                 socket = server.accept();
-                System.out.println("Клиент подключился");
-                System.out.println("socket.getRemoteSocketAddress(): " + socket.getRemoteSocketAddress());
-                System.out.println("socket.getLocalSocketAddress() " + socket.getLocalSocketAddress());
+//                System.out.println("Клиент подключился");
+                LOGGER.log(Level.WARNING,"Клиент подключился\n" +
+                        "socket.getRemoteSocketAddress(): " + socket.getRemoteSocketAddress()+ "\n"+
+                        "socket.getLocalSocketAddress() " + socket.getLocalSocketAddress());
+//                System.out.println("socket.getRemoteSocketAddress(): " + socket.getRemoteSocketAddress());
+//                System.out.println("socket.getLocalSocketAddress() " + socket.getLocalSocketAddress());
                 new ClientHandler(this, socket);
             }
         } catch (IOException | SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {
+            executorService.shutdown();
             try {
                 assert authService != null;
                 authService.disconnectDB();
