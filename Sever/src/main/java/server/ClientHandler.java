@@ -3,6 +3,7 @@ package server;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.net.SocketTimeoutException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.logging.Level;
 
 public class ClientHandler {
     Server server;
@@ -43,16 +45,19 @@ public class ClientHandler {
                         Message msg;
                         while (true) {
                             msg = gson.fromJson(in.readUTF(),Message.class);
-                            System.out.println("Серверу пришло сообщение: " + gson.toJson(msg));
+                            Server.LOGGER.log(Level.INFO,"Серверу пришло сообщение: " + gson.toJson(msg));
+//                            System.out.println("Серверу пришло сообщение: " + gson.toJson(msg));
                             if (msg.isSystem()) {
                                 String[] token = msg.getSystemCommand().split("\\s");
                                 if (token[0].equals(Server.REG)) {
                                     boolean b = server.getAuthService().registration(token[1], token[2], token[3]);
                                     if (b) {
-                                        System.out.println("Прошла регистрация нового пользователя " + token[3] + "\n");
+                                        Server.LOGGER.log(Level.INFO,"Прошла регистрация нового пользователя " + token[3]);
+//                                        System.out.println("Прошла регистрация нового пользователя " + token[3] + "\n");
                                         sendSystemMsg(String.format("%s %s",Server.REG_RESULT, Server.RESULT_OK));
                                     } else {
-                                        System.out.println("Была неудачная попытка регистрации");
+                                        Server.LOGGER.log(Level.INFO,"Была неудачная попытка регистрации");
+//                                        System.out.println("Была неудачная попытка регистрации");
                                         sendSystemMsg(String.format("%s %s",Server.REG_RESULT, Server.RESULT_FAILED));
                                     }
                                 } else if (token[0].equals(Server.AUTH)) {
@@ -70,7 +75,8 @@ public class ClientHandler {
                                         nick = newNick;
                                         login = token[1];
                                         server.subscribe(this);
-                                        System.out.printf("Клиент %s подключился \n", nick);
+                                        Server.LOGGER.log(Level.INFO, String.format("Клиент %s подключился", nick));
+//                                        System.out.printf("Клиент %s подключился \n", nick);
                                         server.broadcastSystemMsg(String.format("%s %s", Server.WHO_LOGGED_IN, nick));
                                         clientIsAuth = true;
                                         socket.setSoTimeout(0);
@@ -88,7 +94,8 @@ public class ClientHandler {
                     //цикл работы
                     while (clientIsAuth) {
                         Message msg=gson.fromJson(in.readUTF(),Message.class);
-                        System.out.println("Серверу пришло сообщение: " + gson.toJson(msg));
+                        Server.LOGGER.log(Level.INFO, "Серверу пришло сообщение: " + gson.toJson(msg));
+//                        System.out.println("Серверу пришло сообщение: " + gson.toJson(msg));
                         if (msg.isSystem()) {
                             String[] token = msg.getSystemCommand().split("\\s");
                             if (token[0].equals(Server.END)) {
@@ -111,7 +118,8 @@ public class ClientHandler {
                 } catch (IOException | SQLException e) {
                     e.printStackTrace();
                 } finally {
-                    System.out.println("Клиент отключился");
+                    Server.LOGGER.log(Level.WARNING,"Клиент отключился");
+//                    System.out.println("Клиент отключился");
                     server.unsubscribe(this);
                     try {
                         in.close();
