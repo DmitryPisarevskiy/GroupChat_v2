@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
@@ -91,17 +91,23 @@ public class Server {
                 client.sendSystemMsg(msg.getSystemCommand());
             }
         } else {
-            if (!msg.getRecievers().equals("")) {
-                String[] token = msg.getRecievers().split("\\s");
-                int i = 0;
-                while (i < token.length) {
-                    for (ClientHandler clientHandler : clients) {
-                        if (clientHandler.getNick().equals(token[i])) {
-                            clientHandler.sendMsg(msg);
-                        }
+            if (msg.getRecievers().length!=0) {
+                List<String> recievers= Arrays.asList(msg.getRecievers());
+                for (ClientHandler clientHandler : clients) {
+                    if (recievers.contains(clientHandler.getNick())) {
+                        clientHandler.sendMsg(msg);
                     }
-                    i++;
                 }
+//                String[] token = msg.getRecievers();
+//                int i = 0;
+//                while (i < token.length) {
+//                    for (ClientHandler clientHandler : clients) {
+//                        if (clientHandler.getNick().equals(token[i])) {
+//                            clientHandler.sendMsg(msg);
+//                        }
+//                    }
+//                    i++;
+//                }
             } else {
                 for (ClientHandler clientHandler : clients) {
                     clientHandler.sendMsg(msg);

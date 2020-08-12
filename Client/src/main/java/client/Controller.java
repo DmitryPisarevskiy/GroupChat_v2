@@ -12,7 +12,12 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.FontSmoothingType;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -22,6 +27,8 @@ import java.net.Socket;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
 
@@ -37,6 +44,7 @@ public class Controller implements Initializable {
     @FXML public MenuItem btnDisconnect;
     @FXML public MenuItem btnChangeNick;
     @FXML public MenuItem btnClearHistory;
+    @FXML public TextFlow textFlow;
 
     private final int PORT = 8189;
     private final String IP_ADDRESS = "127.0.0.1";
@@ -94,6 +102,14 @@ public class Controller implements Initializable {
             btnClearHistory.setDisable(true);
         } else {
             setTitle(nick);
+            MultipleSelectionModel<String> langsSelectionModel = listOfUsers.getSelectionModel();
+            langsSelectionModel.setSelectionMode(SelectionMode.MULTIPLE);
+            listOfUsers.setOnMouseClicked(event -> {
+                String str = event.getTarget().toString();
+                if (str.contains("null")) {
+                    listOfUsers.getSelectionModel().clearSelection();
+                };
+            });
             if (!new File("Client/src/main/resources/histories").exists()) {
                 new File("Client/src/main/resources/histories").mkdirs();
             }
@@ -104,7 +120,8 @@ public class Controller implements Initializable {
                     if (!authenticated) {
                         msgList = new LinkedList<>();
                     } else {
-                        textArea.clear();
+//                        textArea.clear();
+                        clearTextFlow();
                     }
                 } else {
                     ois = new ObjectInputStream(new FileInputStream(history));
@@ -112,10 +129,12 @@ public class Controller implements Initializable {
                     ois.close();
                     for (Message message : msgList) {
                         if (!message.isSystem()) {
-                            textArea.appendText(String.format("%s, [%s]->[%s]: %s\n",DATE_FORMAT.format(message.getDate()), message.getSender(),
-                                    message.getRecievers().equals("")?"everyone":message.getRecievers(),message.getText()));
+//                            textArea.appendText(String.format("%s, [%s]->%s: %s\n",DATE_FORMAT.format(message.getDate()), message.getSender(),
+//                                    message.getRecievers().length==0?"[everyone]": Arrays.toString(message.getRecievers()),message.getText()));
+                            addMsgToTextFlow(message);
                         } else {
-                            textArea.appendText(message.getText()+"\n");
+                            addMsgToTextFlow(message);
+//                            textArea.appendText(message.getText()+"\n");
                         }
                     }
                 }
@@ -170,9 +189,11 @@ public class Controller implements Initializable {
                             String[] token = msg.getSystemCommand().split("\\s");
                             if (token[0].equals(AUTH_OK)) {
                                 nick = token[1];
-                                textArea.clear();
+//                                textArea.clear();
+                                clearTextFlow();
                                 setAuthenticated(true);
-                                textArea.appendText(msg.getText()+"\n");
+//                                textArea.appendText(msg.getText()+"\n");
+                                addMsgToTextFlow(msg);
                                 listOfUsers.setVisible(true);
                                 listOfUsers.setManaged(true);
                                 addMsgToHistory(msg);
@@ -188,7 +209,8 @@ public class Controller implements Initializable {
                                 }
                             } else {
                                 setAuthenticated(false);
-                                textArea.appendText(msg.getText() + "\n");
+//                                textArea.appendText(msg.getText() + "\n");
+                                addMsgToTextFlow(new Message(msg.getText() + "\n"));
                             }
                         }
                         addMsgToHistory(msg);
@@ -209,7 +231,8 @@ public class Controller implements Initializable {
                                 break;
                             } else if (token[0].equals(WHO_LOGGED_IN)) {
                                 if (!token[1].equals(nick)) {
-                                    textArea.appendText(msg.getText()+"\n");
+//                                    textArea.appendText(msg.getText()+"\n");
+                                    addMsgToTextFlow(msg);
                                 }
                             } else if (token[0].equals(CLIENT_LIST)) {
                                 Platform.runLater(() -> {
@@ -223,14 +246,16 @@ public class Controller implements Initializable {
                                     nick=token[2];
                                     nickController.regMessage("Ник успешно изменен!");
                                     setAuthenticated(true);
-                                    textArea.appendText(msg.getText()+"\n");
+//                                    textArea.appendText(msg.getText()+"\n");
+                                    addMsgToTextFlow(msg);
                                 } else {
                                     nickController.regMessage("Ник не изменен. Возможно \nвы неверно ввели пароль");
                                 }
                             }
                         } else {
-                            textArea.appendText(String.format("%s, [%s]->[%s]: %s\n",DATE_FORMAT.format(msg.getDate()), msg.getSender(),
-                                    msg.getRecievers().equals("")?"everyone":msg.getRecievers(),msg.getText()));
+//                            textArea.appendText(String.format("%s, [%s]->%s: %s\n",DATE_FORMAT.format(msg.getDate()), msg.getSender(),
+//                                    msg.getRecievers().length==0?"[everyone]": Arrays.toString(msg.getRecievers()),msg.getText()));
+                            addMsgToTextFlow(msg);
                         }
                     }
                 } catch (IOException | RuntimeException e) {
@@ -254,6 +279,32 @@ public class Controller implements Initializable {
         }
     }
 
+    private void clearTextFlow() {
+        Platform.runLater(()->{
+            textFlow.getChildren().clear();
+        });
+    }
+
+    private void addMsgToTextFlow(Message msg) {
+        Text date = new Text(DATE_FORMAT.format(msg.getDate()));
+        date.setStyle("-fx-font-weight: bold");
+        date.setUnderline(true);
+        Text text = new Text(msg.getText()+"\n");
+        if (msg.isSystem()) {
+            Platform.runLater(()->{
+                textFlow.getChildren().addAll(date, text);
+            });
+        } else {
+            Text preText = new Text(String.format(" [%s]->%s: ",msg.getSender(),
+                    msg.getRecievers().length==0?"[everyone]": Arrays.toString(msg.getRecievers())));
+            preText.setFill(Color.GREEN);
+            preText.setStyle("-fx-font-weight: bold");
+            Platform.runLater(()->{
+                textFlow.getChildren().addAll(date, preText, text);
+            });
+        }
+    }
+
     private void addMsgToHistory(Message msg) throws IOException {
         if (!msg.isSystem()
                 || msg.getSystemCommand().startsWith(AUTH_OK)
@@ -271,11 +322,14 @@ public class Controller implements Initializable {
 
     public void sendMsg(ActionEvent actionEvent) {
         try {
-            Message msg = new Message(nick,"", textField.getText());
-            String msgAsJSON = new Gson().toJson(msg);
-            out.writeUTF(msgAsJSON);
-            textField.requestFocus();
-            textField.clear();
+            if (!textField.getText().equals("")) {
+                System.out.println(listOfUsers.getSelectionModel().getSelectedItems());
+                Message msg = new Message(nick, listOfUsers.getSelectionModel().getSelectedItems().toArray(new String[0]), textField.getText());
+                String msgAsJSON = new Gson().toJson(msg);
+                out.writeUTF(msgAsJSON);
+                textField.requestFocus();
+                textField.clear();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -284,7 +338,8 @@ public class Controller implements Initializable {
 
     public void tryToAuth(ActionEvent actionEvent) {
         if (loginField.getText().equals("") && passwordField.getText().equals("")) {
-            textArea.appendText("Введите логин и пароль\n");
+//            textArea.appendText("Введите логин и пароль\n");
+            addMsgToTextFlow(new Message("Введите логин и пароль\n"));
             return;
         }
         if (socket == null || socket.isClosed()) {
@@ -378,6 +433,7 @@ public class Controller implements Initializable {
 
 
     public void clickClientList(MouseEvent mouseEvent) {
+
     }
 
 
@@ -413,7 +469,8 @@ public class Controller implements Initializable {
 
     public void clearHistory(ActionEvent actionEvent) throws IOException {
         msgList.clear();
-        textArea.clear();
+//        textArea.clear();
+        clearTextFlow();
         oos = new ObjectOutputStream(new FileOutputStream(history));
         oos.writeObject(msgList);
         oos.close();

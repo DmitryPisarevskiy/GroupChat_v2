@@ -16,6 +16,10 @@
     -fx-control-inner-background: lightgray;
 }
 
+#textFlow {
+    -fx-control-inner-background: lightgray;
+}
+
 #taMsg {
     -fx-text-fill: red;
 }

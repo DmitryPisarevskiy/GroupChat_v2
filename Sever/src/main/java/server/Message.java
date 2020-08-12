@@ -1,6 +1,9 @@
 package server;
 
+import javafx.collections.ObservableList;
+
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 
@@ -39,11 +42,11 @@ public class Message implements Serializable {
     private boolean isSystem;
     private String systemCommand;
     private String sender;
-    private String recievers;
+    private String[] recievers;
     private String text;
 
 
-    public String getRecievers() {
+    public String[] getRecievers() {
         return recievers;
     }
 
@@ -77,7 +80,7 @@ public class Message implements Serializable {
         }
     }
 
-    public Message(String sender, String recievers, String str) {
+    public Message(String sender, String[] recievers, String str) {
         this.sender = sender;
         this.recievers = recievers;
         isSystem=false;

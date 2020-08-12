@@ -11,6 +11,8 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.text.TextFlow?>
+<?import javafx.scene.control.ScrollPane?>
 <BorderPane fx:controller="client.Controller"
             xmlns:fx="http://javafx.com/fxml" prefHeight="200" prefWidth="320">
     <stylesheets>
@@ -40,7 +42,12 @@
     <center>
         <VBox>
 
-            <TextArea fx:id="textArea" VBox.vgrow="ALWAYS"/>
+
+            <ScrollPane VBox.vgrow="ALWAYS">
+<!--                <TextArea fx:id="textArea" VBox.vgrow="ALWAYS"/>-->
+                <TextFlow fx:id="textFlow" VBox.vgrow="ALWAYS"/>
+            </ScrollPane>
+
 
             <HBox fx:id="authPanel" alignment="CENTER">
                 <VBox alignment="CENTER">
